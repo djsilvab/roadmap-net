@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using Northwind.Entities;
+using Northwind.Entities.Dtos;
 using Northwind.LibA;
 using Northwind.LibA.Repositories;
 using Northwind.LibA.Services;
@@ -224,3 +225,40 @@ Console.WriteLine(ps1.Equals(ps2));
 // var pr2 = new PersonaRecord("Fatima", 1);
 // Console.WriteLine(pr1.Equals(pr2));
 
+var pr10 = new PersonaRecord { Nombre = "Fatima", Edad = 1 };
+//pr10.Edad = 2;
+var pr20 = new EmpleadoRecord("David", 43);
+var pr21 = pr20 with { Edad = 31 };
+Console.WriteLine(pr20);
+Console.WriteLine(pr21);
+
+var pr100 = pr10 with { Nombre = "Luis" };
+
+var cuenta = new Northwind.Entities.CuentaBancaria("1234", 500);
+cuenta.Depositar(100);
+Console.WriteLine(cuenta.Saldo);
+//cuenta.Saldo = 999;
+
+var empleadoDto = new EmpleadoDto("Fátima", 1);
+
+//Comparación por valor
+var empleadoDto2 = new EmpleadoDto("Fátima", 1);
+Console.WriteLine(empleadoDto == empleadoDto2);
+
+//Desconstrucción automática
+//var (Nombre, Edad) = empleadoDto;
+
+try
+{
+    var empleadoDto100 = new EmpleadoDto("Luis", 30);
+    Console.WriteLine(empleadoDto100);
+
+    var empleadoDtoInvalido = new EmpleadoDto("", 15);
+}
+catch(Exception ex)
+{
+    Console.WriteLine($"Error: {ex.Message}");
+}
+
+var clientDto = new ClienteDto("Ana", "ana@gmail.com", 33);
+Console.WriteLine(clientDto);
