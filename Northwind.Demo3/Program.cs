@@ -101,3 +101,8 @@ static async Task<string> RandomAsync()
     crono.Stop();
     return $"{num} calculado en {crono.Elapsed}";
 }
+
+Thread hiloPrincipal = Thread.CurrentThread;
+hiloPrincipal.Name = "Hilo Principal";
+Console.WriteLine($"Hilo Actual: {hiloPrincipal.Name}");
+
