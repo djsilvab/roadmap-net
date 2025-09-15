@@ -16,4 +16,8 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.*" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../Northwind.Entities/Northwind.Entities.csproj" />
+  </ItemGroup>
+
 </Project>

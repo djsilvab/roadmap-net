@@ -64,6 +64,7 @@
 using System.Diagnostics;
 using System.Text;
 using Microsoft.Extensions.Configuration;
+using Northwind.Entities;
 
 var config = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
@@ -71,28 +72,39 @@ var config = new ConfigurationBuilder()
                     .Build();
 
 int maxConcurrentRequests = config.GetValue<int>("AppSettings:MaxConcurrentRequests");
+int timeoutCancellationToken = config.GetValue<int>("AppSettings:TimeoutCancellationToken");
+
 var apiURL = "http://localhost:5144";
-Console.WriteLine("cantidad de tarjetas:");
+
+Console.Write("cantidad de tarjetas:");
 short cantTarjetas = short.Parse(Console.ReadLine() ?? "0");
-var lstTarjetas = ObtenerTarjetasDeCredito(cantTarjetas);
+
+CancellationTokenSource cancellationTokenSource = new();
+cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(timeoutCancellationToken));
+
 var stopWatch = Stopwatch.StartNew();
 
 try
 {
-    await ProcesarTarjetas(lstTarjetas);
+    var lstTarjetas = ObtenerTarjetasDeCredito(cantTarjetas);
+    await ProcesarTarjetas(lstTarjetas, cancellationTokenSource.Token);
 }
 catch (HttpRequestException ex)
 {
     Console.WriteLine(ex.Message);
 }
+catch (TaskCanceledException ex)
+{
+    Console.WriteLine("La operación ha sido cancelada");
+}
 
-Console.WriteLine($"Operación finalizada en : {stopWatch.ElapsedMilliseconds/1000.0} seconds");
+Console.WriteLine($"Operación finalizada en : {stopWatch.ElapsedMilliseconds / 1000.0} seconds");
 
-async Task ProcesarTarjetas(List<string> lstTarjetas)
+async Task ProcesarTarjetas(List<string> lstTarjetas, CancellationToken cancellationToken = default)
 {
     using var httpClient = new HttpClient();
     using var semaforo = new SemaphoreSlim(maxConcurrentRequests);
-    
+
     var tareas = lstTarjetas.Select(async (tarjeta) =>
     {
         await semaforo.WaitAsync();
@@ -100,20 +112,24 @@ async Task ProcesarTarjetas(List<string> lstTarjetas)
         {
             var json = System.Text.Json.JsonSerializer.Serialize(tarjeta);
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var response = await httpClient.PostAsync($"{apiURL}/tarjetas", content);
+            var response = await httpClient.PostAsync($"{apiURL}/tarjetas", content, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
                 Console.WriteLine($"Tarjeta {tarjeta}: Error {(int)response.StatusCode}");
-                return;
+                return null;
             }
 
             var result = await response.Content.ReadAsStringAsync();
             Console.WriteLine($"Tarjeta {tarjeta}: {result}");
+
+            return response;
+
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error procesando tarjeta {tarjeta}: {ex.Message}");
+            return null;
         }
         finally
         {
@@ -121,7 +137,26 @@ async Task ProcesarTarjetas(List<string> lstTarjetas)
         }
     });
 
-    await Task.WhenAll(tareas);
+    var responses = await Task.WhenAll(tareas);
+    var lstRechazadas = new List<string>();
+    foreach (var response in responses)
+    {
+        if (response == null) continue;
+        var result = await response.Content.ReadAsStringAsync();
+        var resultCard = System.Text.Json.JsonSerializer.Deserialize<CardResponse>(result);
+        if (resultCard != null && !resultCard.Aprobada)
+        {
+            if (!string.IsNullOrEmpty(resultCard.Tarjeta))
+                lstRechazadas.Add(resultCard.Tarjeta);
+        }
+    }
+
+    foreach (var item in lstRechazadas)
+    {
+        Console.WriteLine(item);
+    }
+
+    
 }
 
 List<string> ObtenerTarjetasDeCredito(short cantTarjetas)
