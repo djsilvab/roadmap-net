@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-var archivos = new List<string> { "Archivo1", "Archivo2", "Archivo3" };
+var archivos = new List<string> { "Archivo1", "Archivo2", "Archivo3", "Archivo4" };
 
 Console.WriteLine("\nIniciando descargas... \n");
 
@@ -128,3 +128,18 @@ var tareasProgramadas = respuestas.Select((texto, i) =>
 
 var resultados = await Task.WhenAll(tareasProgramadas);
 Console.WriteLine($"Total palabras en todos los sitios: {resultados.Sum()}");
+
+//Implementación eficiente con límites
+var opcionesParalelismo = new ParallelOptions { MaxDegreeOfParallelism = 3 };
+await Parallel.ForEachAsync(archivos, opcionesParalelismo, async (archivo, _) =>
+{
+    await RealizarValidaciones(archivo);
+});
+
+async Task RealizarValidaciones(string archivo)
+{
+    await Metodo1(archivo);
+}
+
+async Task Metodo1(string archivo)
+    => Console.WriteLine(archivo);
