@@ -154,16 +154,15 @@ async Task ProcesarTarjetas(List<string> lstTarjetas, CancellationToken cancella
     foreach (var item in lstRechazadas)
     {
         Console.WriteLine(item);
-    }
-
-    
+    }    
 }
 
-List<string> ObtenerTarjetasDeCredito(short cantTarjetas)
+List<string> ObtenerTarjetasDeCredito(short cantTarjetas, CancellationToken cancellationToken = default)
 {    
-    return [.. Enumerable.Range(1, cantTarjetas).Select(x =>
-        x.ToString().PadLeft(16, '0')
-    )];
+    return [.. Enumerable.Range(1, cantTarjetas).Select(x => {
+        if(cancellationToken.IsCancellationRequested) throw new TaskCanceledException();
+        return x.ToString().PadLeft(16, '0');
+    })];
 }
 
 async Task<string> ObtenerSaludo(string apiURL, string nombre)
@@ -175,3 +174,25 @@ async Task<string> ObtenerSaludo(string apiURL, string nombre)
 }
 
 async Task Esperar() => await Task.Delay(TimeSpan.FromSeconds(0));
+
+Task ProcesarTarjetasMock(List<string> lstTarjetas, CancellationToken cancellationToken = default)
+    => Task.CompletedTask;
+
+Task<List<string>> ObtenerTarjetasDeCreditoMock(short cantTarjetas, CancellationToken cancellationToken = default)
+{
+    var lstTarjetas = new List<string>
+    {
+        "0000000000000001"
+    };
+    return Task.FromResult(lstTarjetas);
+}
+
+Task ObtenerTareaConError()
+    => Task.FromException(new ApplicationException(""));
+
+Task ObtenerTareaCancelada()
+{
+    cancellationTokenSource = new CancellationTokenSource();
+    return Task.FromCanceled(cancellationTokenSource.Token);
+}
+    
