@@ -45,32 +45,98 @@
 //     Console.WriteLine(linea);
 // }
 
-var httpClient = new HttpClient();
+// Console.WriteLine("Ingrese su nombre:");
+// string nombre = Console.ReadLine() ?? string.Empty;
+// await Esperar();
+// if (!string.IsNullOrEmpty(nombre))
+// {    
+//     try
+//     {
+//         var saludo = await ObtenerSaludo(apiURL, nombre);
+//         Console.WriteLine(saludo);    
+//     }
+//     catch (HttpRequestException ex)
+//     {
+//         Console.WriteLine($"Error: {ex.Message}");
+//     }
+// }
+
+using System.Diagnostics;
+using System.Text;
+using Microsoft.Extensions.Configuration;
+
+var config = new ConfigurationBuilder()
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                    .Build();
+
+int maxConcurrentRequests = config.GetValue<int>("AppSettings:MaxConcurrentRequests");
 var apiURL = "http://localhost:5144";
-Console.WriteLine("Ingrese su nombre:");
-string nombre = Console.ReadLine() ?? string.Empty;
-await Esperar();
-if (!string.IsNullOrEmpty(nombre))
-{    
-    try
-    {
-        var saludo = await ObtenerSaludo(nombre);
-        Console.WriteLine(saludo);    
-    }
-    catch (HttpRequestException ex)
-    {
-        Console.WriteLine($"Error: {ex.Message}");
-    }
+Console.WriteLine("cantidad de tarjetas:");
+short cantTarjetas = short.Parse(Console.ReadLine() ?? "0");
+var lstTarjetas = ObtenerTarjetasDeCredito(cantTarjetas);
+var stopWatch = Stopwatch.StartNew();
+
+try
+{
+    await ProcesarTarjetas(lstTarjetas);
+}
+catch (HttpRequestException ex)
+{
+    Console.WriteLine(ex.Message);
 }
 
-async Task<string> ObtenerSaludo(string nombre)
+Console.WriteLine($"Operación finalizada en : {stopWatch.ElapsedMilliseconds/1000.0} seconds");
+
+async Task ProcesarTarjetas(List<string> lstTarjetas)
 {
-    using (var respuesta = await httpClient.GetAsync($"{apiURL}/saludos2/{nombre}"))
+    using var httpClient = new HttpClient();
+    using var semaforo = new SemaphoreSlim(maxConcurrentRequests);
+    
+    var tareas = lstTarjetas.Select(async (tarjeta) =>
     {
-        respuesta.EnsureSuccessStatusCode();
-        var saludo = await respuesta.Content.ReadAsStringAsync();
-        return saludo;
-    }
+        await semaforo.WaitAsync();
+        try
+        {
+            var json = System.Text.Json.JsonSerializer.Serialize(tarjeta);
+            using var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = await httpClient.PostAsync($"{apiURL}/tarjetas", content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Tarjeta {tarjeta}: Error {(int)response.StatusCode}");
+                return;
+            }
+
+            var result = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Tarjeta {tarjeta}: {result}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error procesando tarjeta {tarjeta}: {ex.Message}");
+        }
+        finally
+        {
+            semaforo.Release();
+        }
+    });
+
+    await Task.WhenAll(tareas);
+}
+
+List<string> ObtenerTarjetasDeCredito(short cantTarjetas)
+{    
+    return [.. Enumerable.Range(1, cantTarjetas).Select(x =>
+        x.ToString().PadLeft(16, '0')
+    )];
+}
+
+async Task<string> ObtenerSaludo(string apiURL, string nombre)
+{
+    using var httpClient = new HttpClient();
+    var respuesta = await httpClient.GetAsync($"{apiURL}/saludos2/{nombre}");
+    respuesta.EnsureSuccessStatusCode();
+    return await respuesta.Content.ReadAsStringAsync();
 }
 
 async Task Esperar() => await Task.Delay(TimeSpan.FromSeconds(0));

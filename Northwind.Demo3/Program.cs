@@ -1,7 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-
 
 var archivos = new List<string> { "Archivo1", "Archivo2", "Archivo3" };
 
