@@ -46,5 +46,40 @@ var ventas = new List<Venta>
 var grandes = ventas.Where(v => v.CalcularTotal() > 1000);
 
 string logPath = "ventas_log.txt";
-System.IO.File.WriteAllLines(logPath, grandes.Select(v => $"{v.Producto} - Total: {v.CalcularTotal()}"));
+// System.IO.File.WriteAllLines(logPath, grandes.Select(v => $"{v.Producto} - Total: {v.CalcularTotal()}"));
+using var writer = new StreamWriter(logPath, append: true); 
+foreach(var item in grandes)
+{
+    await writer.WriteLineAsync($"{item.Producto} - Total: {item.CalcularTotal()}");
+}
+
 Console.WriteLine($"Logs guardados en {logPath}");
+
+Console.WriteLine("---- Yield ----");
+foreach(var p in getPersonas())
+{   
+    Console.WriteLine(p);
+}
+
+var personas = getPersonas()
+                .SelectMany(persona => getApellidos().Select(apellido => new { Nombre = persona,
+                                                                            Apellido = apellido }));
+
+foreach(var persona in personas)
+{
+    Console.WriteLine($"{persona.Nombre} {persona.Apellido}");
+}
+
+IEnumerable<string> getPersonas()
+{
+    yield return "Ana";
+    yield return "Luis";
+    yield return "Carlos";
+}
+
+IEnumerable<string> getApellidos(){
+    yield return "García";
+    yield return "Pérez";
+    yield return "Sánchez";
+    yield return "Ramírez";
+}
