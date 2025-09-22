@@ -70,6 +70,9 @@ foreach(var persona in personas)
     Console.WriteLine($"{persona.Nombre} {persona.Apellido}");
 }
 
+//usando LINQ - UNION
+var res = getPersonas().Union(getApellidos());
+
 IEnumerable<string> getPersonas()
 {
     yield return "Ana";
