@@ -1,9 +1,6 @@
 ﻿using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 
-
-var archivos = new List<string> { "Archivo1", "Archivo2", "Archivo3" };
+var archivos = new List<string> { "Archivo1", "Archivo2", "Archivo3", "Archivo4" };
 
 Console.WriteLine("\nIniciando descargas... \n");
 
@@ -16,12 +13,14 @@ foreach (var archivo in archivos)
         Task.Run(async () =>
         {
             Console.WriteLine($"Descargando {archivo}...");
-            await Task.Delay(2000);// Simula 2 seg de descarga
-            // Console.WriteLine($"{archivo} descargado");
+            // await Task.Delay(2000);// Simula 2 seg de descarga
+            await Task.Delay(TimeSpan.FromSeconds(5));
             return $"{archivo} descargado!!";
         })
     );
 }
+
+
 
 //Esperar a que todas las descargas finalicen
 var resultado = await Task.WhenAll(tareas);
@@ -106,3 +105,41 @@ Thread hiloPrincipal = Thread.CurrentThread;
 hiloPrincipal.Name = "Hilo Principal";
 Console.WriteLine($"Hilo Actual: {hiloPrincipal.Name}");
 
+string contenido = string.Empty;
+using var httpClient = new HttpClient();
+var tareasDescarga = archivos.Select(async (archivo) =>
+{
+    contenido = await httpClient.GetStringAsync(archivo);
+    Console.WriteLine($"Descargado: {archivo}");
+    return contenido;
+});
+
+var respuestas = await Task.WhenAll(tareasDescarga);
+
+var tareasProgramadas = respuestas.Select((texto, i) =>   
+    Task.Run(() =>
+    {
+        var palabras = texto.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        Console.WriteLine($"URL {i + 1}: {palabras.Length} palabras");
+        return palabras.Length;
+    })
+   
+);
+
+var resultados = await Task.WhenAll(tareasProgramadas);
+Console.WriteLine($"Total palabras en todos los sitios: {resultados.Sum()}");
+
+//Implementación eficiente con límites
+var opcionesParalelismo = new ParallelOptions { MaxDegreeOfParallelism = 3 };
+await Parallel.ForEachAsync(archivos, opcionesParalelismo, async (archivo, _) =>
+{
+    await RealizarValidaciones(archivo);
+});
+
+async Task RealizarValidaciones(string archivo)
+{
+    await Metodo1(archivo);
+}
+
+async Task Metodo1(string archivo)
+    => Console.WriteLine(archivo);
