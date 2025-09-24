@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Northwind.Entities/Northwind.Entities.csproj" />
+    <ProjectReference Include="..\Northwind.LibA\Northwind.LibA.csproj" />
   </ItemGroup>
 
 </Project>

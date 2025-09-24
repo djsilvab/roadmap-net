@@ -1,6 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using Northwind.Entities.Interfaces;
 using Northwind.Entities.Models;
+using Northwind.LibA.Repositories;
 
 Console.WriteLine("---- Interfaces y Clases Abstractas ----");
 
@@ -72,6 +73,27 @@ foreach(var persona in personas)
 
 //usando LINQ - UNION
 var res = getPersonas().Union(getApellidos());
+
+//usando LINQ - JOIN MULTIPLE
+Console.WriteLine("\n***** Ejercicio de LINQ MULTIPLE *****");
+SeedData.GetEmployees() //primera fuente(Empleados)
+                    .Join(
+                        SeedData.GetDepartments(),//segunda fuente(Departamentos)
+                        emp1 => emp1.IdDepartamento,
+                        dep => dep.Id,
+                        (emp1, dep) => new { emp1, dep }
+                    ).Join(
+                        SeedData.GetDirecciones(), //tercera fuente(Direcciones)
+                        emp2 => emp2.emp1.IdDireccion,
+                        dir => dir.Id,
+                        (emp2, dir) => new { emp2, dir }
+                    ).Select(emp3 => new
+                    {
+                        Id = emp3.emp2.emp1.Id,
+                        Empleado = emp3.emp2.emp1.Nombre,
+                        Departamento = emp3.emp2.dep.Nombre,
+                        Direccion = emp3.dir.Descripcion
+                    }).ToList().ForEach(e => Console.WriteLine($"{e.Id}, {e.Empleado}, {e.Departamento}, {e.Direccion}"));
 
 IEnumerable<string> getPersonas()
 {
