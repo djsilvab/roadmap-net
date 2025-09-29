@@ -93,28 +93,6 @@ foreach(var p in SeedData.getPersonas())
     Console.WriteLine(p);
 }
 
-Console.WriteLine("---- SELECT MANY ----");
-var personas = SeedData.getPersonas()
-                        .SelectMany(persona => SeedData.getApellidos()
-                                                        .Select(apellido =>
-                                                            new
-                                                            {
-                                                                Nombre = persona,
-                                                                Apellido = apellido
-                                                            }
-                                                        ));
-foreach (var persona in personas)
-{
-    Console.WriteLine($"{persona.Nombre} {persona.Apellido}");
-}
-
-var empByDepaQuery = SeedData.GetDepartments().Join(
-    SeedData.GetEmployees(),
-    d => d.Id,
-    e => e.IdDepartamento,
-    (dx, ex) => new { Departamento = dx.Nombre, Empleado = ex.Nombre }
-).GroupBy(g => g.Departamento)
-.Select(x => new { Departamento = x.Key, Empleados = string.Join(",", x.Select(r => r.Empleado)) });
 
 
 //usando LINQ - UNION
@@ -290,3 +268,59 @@ foreach (var item in prodsByCategoryQuery2)
     Console.WriteLine($"Producto: {item.Producto.Nombre,-20} | Categoría: {item.Categorias.FirstOrDefault()?.Nombre ?? "Sin Categoria"}");
 }
 
+Console.WriteLine($"{new string('*', 10)} LINQ - SELECT MANY {new string('*', 10)}");
+var queryDeparts = SeedData.GetDepartments().Join(
+    SeedData.GetEmployees(),
+    d => d.Id,
+    e => e.IdDepartamento,
+    (dx, ex) => new { dx.Id, Departamento = dx.Nombre, Empleado = ex.Nombre }
+)
+.OrderByDescending(x => x.Departamento)
+.GroupBy(g => g.Departamento)
+.Select(x => new { Departamento = x.Key, Empleados = x.Select(r => r.Empleado) });
+
+
+foreach (var dep in queryDeparts)
+{
+    Console.WriteLine($"Departamento: {dep.Departamento}, Empleados: {string.Join("|", dep.Empleados)}");
+}
+
+Console.WriteLine($"{new string('*', 10)} LINQ - SELECT MANY 2 {new string('*', 10)}");
+var querySelectMany = queryDeparts.SelectMany(d => d.Empleados);
+foreach (var empleado in querySelectMany)
+{
+    Console.WriteLine(empleado);
+}
+
+Console.WriteLine($"{new string('*', 10)} LINQ - SELECT MANY 3 {new string('*', 10)}");
+var querySelectManyProy = queryDeparts.SelectMany(
+    d => d.Empleados,
+    (d, e) => new { d.Departamento, Empleado = e }
+);
+
+foreach (var dep in querySelectManyProy)
+{
+    Console.WriteLine($"Departamento: {dep.Departamento}, Empleado: {dep.Empleado}");
+}
+
+Console.WriteLine($"{new string('*', 10)} LINQ - SELECT MANY 1 {new string('*', 10)}");
+var personas = SeedData.getPersonas()
+                        .SelectMany(persona => SeedData.getApellidos()
+                                                        .Select(apellido =>
+                                                            new
+                                                            {
+                                                                Nombre = persona,
+                                                                Apellido = apellido
+                                                            }
+                                                        ));
+foreach (var persona in personas)
+{
+    Console.WriteLine($"{persona.Nombre} {persona.Apellido}");
+}
+
+Console.WriteLine($"{new string('*', 10)} LINQ - SELECT MANY 1.1 {new string('*', 10)}");
+var selectManyPersQuery = SeedData.getPersonas().SelectMany(p => SeedData.getApellidos(), (p,a) => new { Nombre = p , Apellido = a } );
+foreach (var persona in selectManyPersQuery)
+{
+    Console.WriteLine($"{persona.Nombre} {persona.Apellido}");
+}

@@ -34,7 +34,9 @@ public static class SeedData
             new Empleado{ Id = 4, Nombre= "Pablo Fernandez", IdDepartamento = 5, IdDireccion = 3},
             new Empleado{ Id = 5, Nombre= "Roberto Lopez", IdDepartamento = 2, IdDireccion = 2},
             new Empleado{ Id = 6, Nombre= "Roberto Fernandez", IdDepartamento = 4, IdDireccion = 4},
-            new Empleado{ Id = 7, Nombre= "Maria Castillo", IdDepartamento = 2, IdDireccion = 4}
+            new Empleado{ Id = 7, Nombre= "Maria Castillo", IdDepartamento = 2, IdDireccion = 4},
+            new Empleado{ Id = 8, Nombre= "David Silva", IdDepartamento = 2, IdDireccion = 2},
+            new Empleado{ Id = 9, Nombre= "Pamela Polo", IdDepartamento = 4, IdDireccion = 2}
         };
 
         return employees;
