@@ -1,6 +1,4 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using System.Security.Cryptography.X509Certificates;
-using Northwind.Entities;
 using Northwind.Entities.Interfaces;
 using Northwind.Entities.Models;
 using Northwind.LibA.Repositories;
@@ -30,7 +28,7 @@ var sueldos = new[]{
 };
 
 Console.WriteLine($"{new string('*', 10)} LINQ - ANY {new string('*', 10)}");
-var anyQuery = SeedData.GetProducts().Any(p => p.Nombre is not null && p.Nombre.Contains("cebolla", StringComparison.OrdinalIgnoreCase) );
+var anyQuery = SeedData.GetProducts().Any(p => p.Nombre is not null && p.Nombre.Contains("cebolla", StringComparison.OrdinalIgnoreCase));
 Console.WriteLine($"Existen productos: {anyQuery}");
 
 Console.WriteLine($"{new string('*', 10)} LINQ ALL {new string('*', 10)}");
@@ -79,8 +77,8 @@ var grandes = ventas.Where(v => v.CalcularTotal() > 1000);
 
 string logPath = "ventas_log.txt";
 // System.IO.File.WriteAllLines(logPath, grandes.Select(v => $"{v.Producto} - Total: {v.CalcularTotal()}"));
-using var writer = new StreamWriter(logPath, append: true); 
-foreach(var item in grandes)
+using var writer = new StreamWriter(logPath, append: true);
+foreach (var item in grandes)
 {
     await writer.WriteLineAsync($"{item.Producto} - Total: {item.CalcularTotal()}");
 }
@@ -88,8 +86,8 @@ foreach(var item in grandes)
 Console.WriteLine($"Logs guardados en {logPath}");
 
 Console.WriteLine("---- Yield ----");
-foreach(var p in SeedData.getPersonas())
-{   
+foreach (var p in SeedData.getPersonas())
+{
     Console.WriteLine(p);
 }
 
@@ -109,7 +107,7 @@ var queryJoin = from p in SeedData.GetProducts()
 foreach (var r in queryJoin)
 {
     Console.WriteLine($"Producto: {r.Producto}, Categoría: {r.Categoria}");
-}                
+}
 
 //usando LINQ - JOIN MULTIPLE
 Console.WriteLine("\n***** Ejercicio de LINQ MULTIPLE *****");
@@ -146,7 +144,7 @@ var empleadosJoinMult = from e in SeedData.GetEmployees()
 foreach (var emp in empleadosJoinMult)
 {
     Console.WriteLine($"{emp.Id}, {emp.Nombre}, {emp.Departamento}, {emp.Direccion}");
-}                        
+}
 
 
 //usando LINQ - GROUP BY
@@ -181,7 +179,7 @@ var query = from p in SeedData.GetProducts()
 foreach (var grp in query)
 {
     Console.WriteLine($"Categoria: {grp.Key}, \tProductos: [{string.Join("|", grp.Select(x => x.Nombre))}]");
-}            
+}
 
 //usando LINQ - GROUP BY MULTIPLE
 var groupMultEmpls = SeedData.GetEmployees()
@@ -193,7 +191,7 @@ var groupMultEmpls = SeedData.GetEmployees()
                                 .OrderByDescending(g => g.Key.IdDepartamento)
                                 .ThenBy(g => g.Key.IdDireccion)
                                 //.Select(g => new { g.Key.IdDepartamento, g.Key.IdDireccion, Empleados = g.Select(x => x.Nombre) });
-                                .Select(g => g );
+                                .Select(g => g);
 
 foreach (var grpEmp in groupMultEmpls)
 {
@@ -219,12 +217,12 @@ var productsDesc = from e in SeedData.GetEmployees()
 var queryGroupJoin = SeedData.GetCategories().GroupJoin(
                                                 SeedData.GetProducts(),
                                                 c => c.Id,
-                                                p => p.IdCategoria,                                
+                                                p => p.IdCategoria,
                                                 (c, p) =>
                                                 new
                                                 {
                                                     Categoria = c.Nombre,
-                                                    Productos = p.Select( p => p.Nombre)
+                                                    Productos = p.Select(p => p.Nombre)
                                                 }
                                             );
 
@@ -240,10 +238,10 @@ var prodsByCategoryQuery = SeedData.GetProducts().GroupJoin(
                                                     SeedData.GetCategories(),
                                                     p => p.IdCategoria,
                                                     c => c.Id,
-                                                    (p, cs) => new { Producto = p, Categorias = cs.DefaultIfEmpty() }                                                
+                                                    (p, cs) => new { Producto = p, Categorias = cs.DefaultIfEmpty() }
                                                 ).SelectMany(
                                                     x => x.Categorias,
-                                                    (x,c) => new
+                                                    (x, c) => new
                                                     {
                                                         Producto = x.Producto.Nombre,
                                                         Categoria = c?.Nombre ?? "Sin Categoria"
@@ -252,7 +250,7 @@ var prodsByCategoryQuery = SeedData.GetProducts().GroupJoin(
 
 foreach (var item in prodsByCategoryQuery)
 {
-    Console.WriteLine($"Producto: {item.Producto,-20} | Categoría: {item.Categoria}");    
+    Console.WriteLine($"Producto: {item.Producto,-20} | Categoría: {item.Categoria}");
 }
 Console.WriteLine(new string('*', 40));
 
@@ -319,7 +317,7 @@ foreach (var persona in personas)
 }
 
 Console.WriteLine($"{new string('*', 10)} LINQ - SELECT MANY 1.1 {new string('*', 10)}");
-var selectManyPersQuery = SeedData.getPersonas().SelectMany(p => SeedData.getApellidos(), (p,a) => new { Nombre = p , Apellido = a } );
+var selectManyPersQuery = SeedData.getPersonas().SelectMany(p => SeedData.getApellidos(), (p, a) => new { Nombre = p, Apellido = a });
 foreach (var persona in selectManyPersQuery)
 {
     Console.WriteLine($"{persona.Nombre} {persona.Apellido}");
